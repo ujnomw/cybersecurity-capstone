@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <title>Register</title>
+  </head>
+  <body>
+    <header><%- include('./partials/_header-auth'); %></header>
+    <!-- Page-specific content -->
+    <h1>Create new user user</h1>
+    <form action="/register" method="POST">
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        value="<%= typeof username !== 'undefined' ? username : '' %>"
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        value="<%= typeof password !== 'undefined' ? password : '' %>"
+      />
+      <input type="email" name="email" , placeholder="Your email" value="" />
+      <button type="submit">Register</button>
+      <% if (typeof message !== 'undefined') { %>
+      <label> <%= message %></label>
+      <% } %>
+    </form>
+  </body>
+</html>

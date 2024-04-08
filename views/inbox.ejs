@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <title>Inbox</title>
+  </head>
+  <body>
+    <header><%- include('./partials/_header-inside'); %></header>
+    <!-- Page-specific content -->
+    <h1>Your messages are here</h1>
+    <div>
+      <% messages.forEach(m => { %> <%- include('./partials/_message-preview',
+      {messageId: m.id, senderName: m.from}); %> <% }); %>
+    </div>
+  </body>
+</html>

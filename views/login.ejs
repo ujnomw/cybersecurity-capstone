@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+  <body>
+    <header><%- include('./partials/_header-auth'); %></header>
+    <!-- Page-specific content -->
+    <h1>Log in as a user</h1>
+    <form action="/login" method="POST">
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        value="<%= typeof username !== 'undefined' ? username : '' %>"
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        value="<%= typeof password !== 'undefined' ? password : '' %>"
+      />
+      <button type="submit">Submit</button>
+      <% if (typeof message !== 'undefined') { %>
+      <label> <%= message %></label>
+      <% } %>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <title>Inbox</title>
+  </head>
+  <body>
+    <header><%- include('./partials/_header-inside'); %></header>
+    <!-- Page-specific content -->
+    <h1>Your messages are here</h1>
+    <div>
+      <%- include('./partials/_message-content', {message: message}); %>
+    </div>
+  </body>
+</html>
