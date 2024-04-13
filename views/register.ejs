@@ -19,7 +19,12 @@
         placeholder="Password"
         value="<%= typeof password !== 'undefined' ? password : '' %>"
       />
-      <input type="email" name="email" , placeholder="Your email" value="" />
+      <input
+        type="email"
+        name="email"
+        placeholder="Your email"
+        value="<%= typeof email !== 'undefined' ? email : '' %>"
+      />
       <button type="submit">Register</button>
       <% if (typeof message !== 'undefined') { %>
       <label> <%= message %></label>

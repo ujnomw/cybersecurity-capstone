@@ -8,8 +8,8 @@
     <!-- Page-specific content -->
     <h1>Send message</h1>
     <div>
-      <%- include('./partials/_message-submission', {message: 'Test message'});
-      %>
+      <%- include('./partials/_message-submission', {message: typeof message !==
+      "undefined" ? message : undefined}); %>
     </div>
   </body>
 </html>

@@ -3,6 +3,8 @@ const ejs = require("ejs");
 const bp = require("body-parser");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const expressValidator = require("express-validator");
+const inputValidation = require("./input-validation");
 const {
   getUsersMessages,
   getMessageById,
@@ -11,6 +13,7 @@ const {
   register,
 } = require("./database");
 
+// TODO: replace it
 const JWT_KEY = "JWT_KEY";
 
 const app = express();
@@ -55,37 +58,70 @@ app.get("/login", unauthorizedOnly, (req, res) => {
   res.render("login");
 });
 
-app.post("/login", unauthorizedOnly, (req, res) => {
-  const { username, password } = req.body;
-  // TODO: validate input
-  if (!isUser(username, password)) {
-    res.render("login", {
-      message: "Wrong credentials!",
-      username,
-      password,
-    });
-    return;
+app.post(
+  "/login",
+  unauthorizedOnly,
+  inputValidation.validate("login"),
+  (req, res) => {
+    const errors = expressValidator.validationResult(req);
+    const { username, password } = req.body;
+    if (!errors.isEmpty()) {
+      const message =
+        "The following problems occurred: " +
+        errors
+          .array()
+          .map((e) => e.msg)
+          .join(", ");
+
+      res.render("login", { message, username, password });
+      return;
+    }
+
+    if (!isUser(username, password)) {
+      res.render("login", {
+        message: "Wrong credentials!",
+        username,
+        password,
+      });
+      return;
+    }
+    const token = jwt.sign({ username }, JWT_KEY, { expiresIn: "1h" });
+    res.cookie("token", token, { httpOnly: true });
+    res.redirect("/inbox");
   }
-  const token = jwt.sign({ username }, JWT_KEY, { expiresIn: "1h" });
-  res.cookie("token", token, { httpOnly: true });
-  res.redirect("/inbox");
-});
+);
 
 app.get("/register", unauthorizedOnly, (req, res) => {
   res.render("register");
 });
 
-app.post("/register", unauthorizedOnly, async (req, res) => {
-  const { username, password, email } = req.body;
+app.post(
+  "/register",
+  unauthorizedOnly,
+  inputValidation.validate("register"),
+  async (req, res) => {
+    const errors = expressValidator.validationResult(req);
+    const { username, password, email } = req.body;
+    if (!errors.isEmpty()) {
+      const message =
+        "The following problems occurred: " +
+        errors
+          .array()
+          .map((e) => e.msg)
+          .join(", ");
 
-  try {
-    // TODO: validate input
-    await register(username, password, email);
-    res.redirect("/login");
-  } catch (e) {
-    res.render("register");
+      res.render("register", { message, username, password, email });
+      return;
+    }
+
+    try {
+      await register(username, password, email);
+      res.redirect("/login");
+    } catch (e) {
+      res.render("register");
+    }
   }
-});
+);
 
 app.get("/inbox", verifyToken, (req, res) => {
   const username = req.user.username;
@@ -106,17 +142,34 @@ app.get("/send", verifyToken, (req, res) => {
   res.render("send");
 });
 
-app.post("/send", verifyToken, async (req, res) => {
-  const { username: to, content } = req.body;
-  const from = req.user.username;
-  // TODO: validate input
-  try {
-    await sendMessage(to, from, content);
-  } catch (e) {
-    console.log(e);
+app.post(
+  "/send",
+  verifyToken,
+  inputValidation.validate("sendMessage"),
+  async (req, res) => {
+    const errors = expressValidator.validationResult(req);
+    const { username: to, content } = req.body;
+
+    if (!errors.isEmpty()) {
+      const message =
+        "The following problems occurred: " +
+        errors
+          .array()
+          .map((e) => e.msg)
+          .join(", ");
+
+      res.render("send", { message, username: to, content: content });
+      return;
+    }
+    const from = req.user.username;
+    try {
+      await sendMessage(to, from, content);
+    } catch (e) {
+      console.log(e);
+    }
+    res.redirect("/inbox");
   }
-  res.redirect("/inbox");
-});
+);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
