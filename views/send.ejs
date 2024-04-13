@@ -1,11 +1,15 @@
 <html>
   <head>
     <title>Send message</title>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header><%- include('./partials/_header-inside'); %></header>
     <!-- Page-specific content -->
     <h1>Send message</h1>
-    <div><%- include('./partials/_message-submission'); %></div>
+    <div>
+      <%- include('./partials/_message-submission', {message: 'Test message'});
+      %>
+    </div>
   </body>
 </html>

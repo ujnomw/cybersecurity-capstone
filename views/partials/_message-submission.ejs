@@ -1,5 +1,23 @@
-<form action="/send" method="POST">
-  <input type="text" name="username" placeholder="Username" />
-  <input type="text" name="content" placeholder="Message" />
-  <button type="submit">Submit</button>
-</form>
+<div>
+  <form action="/send" method="POST">
+    <div>
+      <label for="username">Username</label>
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        value="<%= typeof username !== 'undefined' ? username : '' %>"
+      />
+    </div>
+    <div>
+      <label for="content">Message</label>
+      <textarea name="content" placeholder="Type your message">
+<%= typeof content !== 'undefined' ? content : '' %></textarea
+      >
+    </div>
+    <button type="submit">Send</button>
+  </form>
+  <% if (typeof message !== 'undefined') { %>
+  <label> <%= message %></label>
+  <% } %>
+</div>
