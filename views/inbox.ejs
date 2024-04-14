@@ -12,9 +12,6 @@
   <body>
     <header><%- include('./partials/_navbar'); %></header>
     <!-- Page-specific content -->
-    <div class="container">
-      <% messages.forEach(m => { %> <%- include('./partials/_message-preview',
-      {messageId: m.id, senderName: m.from}); %> <% }); %>
-    </div>
+    <div class="container"><%- include('./partials/_message-preview'); %></div>
   </body>
 </html>

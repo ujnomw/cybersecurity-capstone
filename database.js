@@ -115,15 +115,14 @@ const getUsersMessages = async (userName) => {
     console.table(extensionsResult.rows);
 
     const queryText =
-      "SELECT messages.message_id AS id, to_user.username AS to, from_user.username AS from, messages.content_encrypted FROM messages JOIN users to_user ON messages.to_id = to_user.id JOIN users from_user ON messages.from_id = from_user.id WHERE to_user.username = $1";
+      "SELECT messages.message_id AS id, to_user.username AS to, from_user.username AS from, messages.content_encrypted, messages.send_at AS timestamp FROM messages JOIN users to_user ON messages.to_id = to_user.id JOIN users from_user ON messages.from_id = from_user.id WHERE to_user.username = $1 ORDER BY messages.send_at DESC";
     console.log("pre query");
     const result = await query(queryText, [userName]);
-    const contentResult = await query("SELECT pgp_sym_decrypt($1, $2)", [
-      result.rows[0].content_encrypted,
-      ENCRYPTION_KEY,
-    ]);
     console.table(result.rows);
-    return result.rows;
+    return result.rows.map((r) => ({
+      ...r,
+      timestamp: renderLocalDate(new Date(r.timestamp)),
+    }));
   } catch (error) {
     return;
   }

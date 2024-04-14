@@ -1,3 +1,11 @@
 <div class="col-md-6">
-  <a href="/inbox/<%= messageId %>">Message from <%= senderName %></a>
+  <h2 class="mb-4">Your inbox</h2>
+  <% if (messages.length === 0 ) { %>
+  <div class="lead">Your have no messages yet...</div>
+  <% } %>
+   <% messages.forEach(m => { %>
+  <div>
+    <a href="/inbox/<%= m.id %>"><%= m.from %> <%= m.timestamp %> </a>
+  </div>
+  <% }); %>
 </div>
