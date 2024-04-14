@@ -11,6 +11,7 @@ const {
   isUser,
   sendMessage,
   register,
+  createTables,
 } = require("./database");
 
 // TODO: replace it
@@ -24,7 +25,7 @@ app.use(bp.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-  res.render("test-page");
+  res.redirect("/inbox");
 });
 
 const verifyToken = (req, res, next) => {
@@ -62,7 +63,7 @@ app.post(
   "/login",
   unauthorizedOnly,
   inputValidation.validate("login"),
-  (req, res) => {
+  async (req, res) => {
     const errors = expressValidator.validationResult(req);
     const { username, password } = req.body;
     if (!errors.isEmpty()) {
@@ -76,8 +77,8 @@ app.post(
       res.render("login", { message, username, password });
       return;
     }
-
-    if (!isUser(username, password)) {
+    const userExists = await isUser(username, password);
+    if (!userExists) {
       res.render("login", {
         message: "Wrong credentials!",
         username,
@@ -85,7 +86,7 @@ app.post(
       });
       return;
     }
-    const token = jwt.sign({ username }, JWT_KEY, { expiresIn: "1h" });
+    const token = jwt.sign({ username }, JWT_KEY, { expiresIn: 600 });
     res.cookie("token", token, { httpOnly: true });
     res.redirect("/inbox");
   }
@@ -118,20 +119,21 @@ app.post(
       await register(username, password, email);
       res.redirect("/login");
     } catch (e) {
+      console.error(e);
       res.render("register");
     }
   }
 );
 
-app.get("/inbox", verifyToken, (req, res) => {
+app.get("/inbox", verifyToken, async (req, res) => {
   const username = req.user.username;
-  const messages = getUsersMessages(username);
-  res.render("inbox", { messages: messages });
+  const messages = await getUsersMessages(username);
+  res.render("inbox", { messages: messages ?? [] });
 });
 
-app.get("/inbox/:id", verifyToken, (req, res) => {
+app.get("/inbox/:id", verifyToken, async (req, res) => {
   const username = req.user.username;
-  const message = getMessageById(username, req.params.id);
+  const message = await getMessageById(username, req.params.id);
   if (message === undefined) {
     res.redirect("/inbox");
   }
@@ -171,6 +173,8 @@ app.post(
   }
 );
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+createTables().then(() => {
+  app.listen(3000, () => {
+    console.log("Server is running on port 3000");
+  });
 });
