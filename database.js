@@ -1,5 +1,6 @@
 const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
+const fs = require("fs");
 require("dotenv").config();
 
 const users = [
@@ -183,6 +184,34 @@ const register = async (username, password, email) => {
   }
 };
 
+// Function to fetch all tables from the database
+async function fetchTables() {
+  const client = await pool.connect();
+  try {
+    // Query to get all table names in the public schema
+    const result = await client.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_type = 'BASE TABLE'
+    `);
+    return result.rows.map((row) => row.table_name);
+  } finally {
+    client.release();
+  }
+}
+
+// Function to fetch the content of a table
+async function fetchTableContent(tableName) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`SELECT * FROM ${tableName}`);
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   getUsersMessages,
   getMessageById: getUsersMessageById,
@@ -190,4 +219,6 @@ module.exports = {
   sendMessage,
   register,
   createTables,
+  fetchTableContent,
+  fetchTables,
 };

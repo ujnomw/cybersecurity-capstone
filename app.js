@@ -5,6 +5,11 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const expressValidator = require("express-validator");
 const inputValidation = require("./input-validation");
+const { parse } = require("json2csv");
+const fs = require("fs");
+const { pipeline } = require("stream");
+const archiver = require("archiver");
+const path = require("path");
 const {
   getUsersMessages,
   getMessageById,
@@ -12,6 +17,8 @@ const {
   sendMessage,
   register,
   createTables,
+  fetchTableContent,
+  fetchTables,
 } = require("./database");
 
 // TODO: replace it
@@ -172,6 +179,67 @@ app.post(
     res.redirect("/inbox");
   }
 );
+
+function getCurrentTimestamp() {
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/:/g, "-").replace(/\..+/, "");
+  return timestamp;
+}
+
+app.get("/dbdump", (req, res) => {
+  res.render("dbdump");
+});
+
+app.post("/dbdump", async (req, res) => {
+  try {
+    const tables = await fetchTables();
+    const tempDir = path.join(__dirname, "temp");
+    const zipFilename = `tables_${getCurrentTimestamp()}.zip`;
+    const zipPath = path.join(tempDir, zipFilename);
+
+    // Ensure the temporary directory exists
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir);
+    }
+
+    // Fetch and process data for all tables concurrently
+    const tableDataPromises = tables.map(async (table) => {
+      const data = await fetchTableContent(table);
+      const fields = Object.keys(data[0]);
+      const csv = parse(data, { fields });
+      return { name: `${table}.csv`, data: csv };
+    });
+
+    // Wait for all table data to be fetched and processed
+    const tableData = await Promise.all(tableDataPromises);
+
+    // Create a zip file with all CSV data
+    const zip = archiver("zip", {
+      zlib: { level: 9 }, // Sets the compression level
+    });
+
+    const output = fs.createWriteStream(zipPath);
+    output.on("close", () => {
+      res.sendFile(zipPath, () => {
+        // Delete the zip file after download
+        fs.unlinkSync(zipPath);
+      });
+    });
+    zip.pipe(output);
+
+    // Append each CSV to the zip
+    tableData.reverse().forEach(({ name, data }) => {
+      zip.append(data, { name });
+    });
+
+    zip.finalize();
+
+    // Serve the zip file for download
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
 
 createTables().then(() => {
   app.listen(3000, () => {
