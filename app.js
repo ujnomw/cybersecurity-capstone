@@ -135,7 +135,7 @@ app.post(
 app.get("/inbox", verifyToken, async (req, res) => {
   const username = req.user.username;
   const messages = await getUsersMessages(username);
-  res.render("inbox", { messages: messages ?? [] });
+  res.render("inbox", { messages: messages ?? [], currentUser: username });
 });
 
 app.get("/inbox/:id", verifyToken, async (req, res) => {
@@ -144,11 +144,12 @@ app.get("/inbox/:id", verifyToken, async (req, res) => {
   if (message === undefined) {
     res.redirect("/inbox");
   }
-  res.render("message-details", { message: message });
+  res.render("message-details", { message: message, currentUser: username });
 });
 
 app.get("/send", verifyToken, (req, res) => {
-  res.render("send");
+  const username = req.user.username;
+  res.render("send", { currentUser: username });
 });
 
 app.post(
@@ -158,6 +159,7 @@ app.post(
   async (req, res) => {
     const errors = expressValidator.validationResult(req);
     const { username: to, content } = req.body;
+    const from = req.user.username;
 
     if (!errors.isEmpty()) {
       const message =
@@ -167,10 +169,14 @@ app.post(
           .map((e) => e.msg)
           .join(", ");
 
-      res.render("send", { message, username: to, content: content });
+      res.render("send", {
+        message,
+        username: to,
+        content: content,
+        currentUser: from,
+      });
       return;
     }
-    const from = req.user.username;
     try {
       await sendMessage(to, from, content);
     } catch (e) {
@@ -187,6 +193,16 @@ function getCurrentTimestamp() {
 }
 
 app.get("/dbdump", (req, res) => {
+  const token = req.cookies.token;
+
+  try {
+    // Verify JWT token
+    const decoded = jwt.verify(token, JWT_KEY);
+    // Attach user information to the request object
+    req.user = decoded;
+    const currentUser = req.user.username;
+    res.render("dbdump", { currentUser });
+  } catch (err) {}
   res.render("dbdump");
 });
 

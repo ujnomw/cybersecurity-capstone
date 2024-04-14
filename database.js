@@ -1,6 +1,7 @@
 const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
+const { renderLocalDate } = require("./utils");
 require("dotenv").config();
 
 const users = [
@@ -144,7 +145,7 @@ const getUsersMessageById = async (userName, messageId) => {
     return {
       ...result.rows[0],
       textContent: contentResult.rows[0].content,
-      timestamp: sendDate.toLocaleTimeString("en-US", { hour12: false }),
+      timestamp: renderLocalDate(sendDate),
     };
   } catch (error) {
     return;

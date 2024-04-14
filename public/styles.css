@@ -1,0 +1,12 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Change align-items to flex-start */
+  min-height: 100vh; /* Use min-height instead of height */
+  padding-top: 20px; /* Add padding to the top */
+}
+.col-md-6 {
+  background-color: #f8f9fa; /* Adding background color for better visualization */
+  padding: 20px; /* Adding padding for better spacing */
+  border-radius: 10px; /* Adding border radius for rounded corners */
+}

@@ -1,34 +1,60 @@
 <html>
   <head>
     <title>Register</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header><%- include('./partials/_header-auth'); %></header>
+    <header><%- include('./partials/_navbar'); %></header>
     <!-- Page-specific content -->
-    <h1>Create new user user</h1>
-    <form action="/register" method="POST">
-      <input
-        type="text"
-        name="username"
-        placeholder="Username"
-        value="<%= typeof username !== 'undefined' ? username : '' %>"
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value="<%= typeof password !== 'undefined' ? password : '' %>"
-      />
-      <input
-        type="email"
-        name="email"
-        placeholder="Your email"
-        value="<%= typeof email !== 'undefined' ? email : '' %>"
-      />
-      <button type="submit">Register</button>
-      <% if (typeof message !== 'undefined') { %>
-      <label> <%= message %></label>
-      <% } %>
-    </form>
+    <div class="container">
+      <div class="col-md-6">
+        <h2 class="mb-4">Register</h2>
+        <form action="/register" method="POST">
+          <div class="mb-3">
+            <label for="username-input" class="form-label">Username</label>
+            <input
+              class="form-control"
+              id="username-input"
+              type="text"
+              name="username"
+              placeholder="Username"
+              value="<%= typeof username !== 'undefined' ? username : '' %>"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="password-input" class="form-label">Password</label>
+            <input
+              class="form-control"
+              id="=password-input"
+              type="password"
+              name="password"
+              placeholder="Password"
+              value="<%= typeof password !== 'undefined' ? password : '' %>"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="email-input" class="form-label">Email</label>
+            <input
+              type="email"
+              id="email-input"
+              name="email"
+              placeholder="Email"
+              class="form-control"
+              value="<%= typeof email !== 'undefined' ? email : '' %>"
+            />
+          </div>
+          <% if (typeof message !== 'undefined') { %>
+          <div class="alert alert-danger" role="alert"><%= message %></div>
+          <% } %>
+          <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+      </div>
+    </div>
   </body>
 </html>

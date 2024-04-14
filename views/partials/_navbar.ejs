@@ -1,0 +1,5 @@
+<% if (typeof currentUser !== 'undefined') { %>
+<%-  include('./_header-inside'); %>
+<% } else { %>
+    <%-  include('./_header-auth'); %>
+<% } %>

@@ -1,23 +1,30 @@
-<div>
+<div class="col-md-6">
+  <h2 class="mb-4">Send message</h2>
   <form action="/send" method="POST">
-    <div>
-      <label for="username">Username</label>
+    <div class="mb-3">
+      <label for="username-input" class="form-label">Username</label>
       <input
+        class="form-control"
+        id="username-input"
         type="text"
         name="username"
         placeholder="Username"
         value="<%= typeof username !== 'undefined' ? username : '' %>"
       />
     </div>
-    <div>
-      <label for="content">Message</label>
-      <textarea name="content" placeholder="Type your message">
+    <div class="mb-3">
+      <label class="form-label" for="content">Message</label>
+      <textarea
+        class="form-control"
+        id="content"
+        name="content"
+        placeholder="Type your message"
+      >
 <%= typeof content !== 'undefined' ? content : '' %></textarea
       >
     </div>
-    <button type="submit">Send</button>
-  </form>
-  <% if (typeof message !== 'undefined') { %>
-  <label> <%= message %></label>
-  <% } %>
+    <% if (typeof message !== 'undefined') { %>
+      <div class="alert alert-danger" role="alert"><%= message %></div>
+      <% } %>
+      <button type="submit" class="btn btn-primary">Send</button>
 </div>
