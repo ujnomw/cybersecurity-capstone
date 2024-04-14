@@ -10,6 +10,7 @@ const fs = require("fs");
 const { pipeline } = require("stream");
 const archiver = require("archiver");
 const path = require("path");
+require("dotenv").config();
 const {
   getUsersMessages,
   getMessageById,
@@ -21,8 +22,7 @@ const {
   fetchTables,
 } = require("./database");
 
-// TODO: replace it
-const JWT_KEY = "JWT_KEY";
+const JWT_KEY = process.env.JWT_KEY;
 
 const app = express();
 
@@ -31,18 +31,16 @@ app.use(express.static(__dirname + "/public"));
 app.use(bp.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.get("/", (req, res) => {
-  res.redirect("/inbox");
-});
+const revokedTokens = new Set();
 
 const verifyToken = (req, res, next) => {
-  // Check if JWT token exists in cookie
   const token = req.cookies.token;
 
   try {
-    // Verify JWT token
     const decoded = jwt.verify(token, JWT_KEY);
-    // Attach user information to the request object
+    if (revokedTokens.has(decoded.jti)) {
+      throw "Already logged out!";
+    }
     req.user = decoded;
   } catch (err) {
     res.redirect("/login");
@@ -55,12 +53,33 @@ const verifyToken = (req, res, next) => {
 const unauthorizedOnly = (req, res, next) => {
   try {
     const token = req.cookies.token;
-    jwt.verify(token, JWT_KEY);
+    const decoded = jwt.verify(token, JWT_KEY);
+    if (revokedTokens.has(decoded.jti)) {
+      throw "logged out already!";
+    }
     res.redirect("/inbox");
   } catch {
     next();
   }
 };
+
+app.get("/logout", verifyToken, (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    const decoded = jwt.verify(token, JWT_KEY);
+    const jti = decoded.jti;
+
+    revokedTokens.add(jti);
+  } catch (e) {
+    console.log("failed to log out", e);
+  }
+  res.redirect("/");
+});
+
+app.get("/", (req, res) => {
+  res.redirect("/inbox");
+});
 
 app.get("/login", unauthorizedOnly, (req, res) => {
   res.render("login");
@@ -93,7 +112,11 @@ app.post(
       });
       return;
     }
-    const token = jwt.sign({ username }, JWT_KEY, { expiresIn: 600 });
+    const jti = Math.random().toString(36).substr(2, 10);
+    const token = jwt.sign({ username }, JWT_KEY, {
+      expiresIn: 600,
+      jwtid: jti,
+    });
     res.cookie("token", token, { httpOnly: true });
     res.redirect("/inbox");
   }
@@ -196,10 +219,11 @@ app.get("/dbdump", (req, res) => {
   const token = req.cookies.token;
 
   try {
-    // Verify JWT token
     const decoded = jwt.verify(token, JWT_KEY);
-    // Attach user information to the request object
     req.user = decoded;
+    if (revokedTokens.has(decoded.jti)) {
+      throw "Already logged out!";
+    }
     const currentUser = req.user.username;
     res.render("dbdump", { currentUser });
   } catch (err) {}
@@ -213,12 +237,10 @@ app.post("/dbdump", async (req, res) => {
     const zipFilename = `tables_${getCurrentTimestamp()}.zip`;
     const zipPath = path.join(tempDir, zipFilename);
 
-    // Ensure the temporary directory exists
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
     }
 
-    // Fetch and process data for all tables concurrently
     const tableDataPromises = tables.map(async (table) => {
       const data = await fetchTableContent(table);
       const fields = Object.keys(data[0]);
@@ -226,31 +248,25 @@ app.post("/dbdump", async (req, res) => {
       return { name: `${table}.csv`, data: csv };
     });
 
-    // Wait for all table data to be fetched and processed
     const tableData = await Promise.all(tableDataPromises);
 
-    // Create a zip file with all CSV data
     const zip = archiver("zip", {
-      zlib: { level: 9 }, // Sets the compression level
+      zlib: { level: 9 },
     });
 
     const output = fs.createWriteStream(zipPath);
     output.on("close", () => {
       res.sendFile(zipPath, () => {
-        // Delete the zip file after download
         fs.unlinkSync(zipPath);
       });
     });
     zip.pipe(output);
 
-    // Append each CSV to the zip
     tableData.reverse().forEach(({ name, data }) => {
       zip.append(data, { name });
     });
 
     zip.finalize();
-
-    // Serve the zip file for download
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");
