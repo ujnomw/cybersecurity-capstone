@@ -132,7 +132,7 @@ app.post(
   inputValidation.validate("register"),
   async (req, res) => {
     const errors = expressValidator.validationResult(req);
-    const { username, password, email } = req.body;
+    const { username, password } = req.body;
     if (!errors.isEmpty()) {
       const message =
         "The following problems occurred: " +
@@ -141,12 +141,12 @@ app.post(
           .map((e) => e.msg)
           .join(", ");
 
-      res.render("register", { message, username, password, email });
+      res.render("register", { message, username, password });
       return;
     }
 
     try {
-      await register(username, password, email);
+      await register(username, password);
       res.redirect("/login");
     } catch (e) {
       console.error(e);

@@ -55,7 +55,6 @@ exports.validate = (method) => {
           .withMessage(
             "Password must be greater than 8 and contain at least one uppercase letter, one lowercase letter, and one number"
           ),
-        body("email").isEmail().withMessage("Invalid email address"),
       ];
     }
   }

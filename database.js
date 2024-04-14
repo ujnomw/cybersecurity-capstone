@@ -63,8 +63,9 @@ async function createTables() {
         username VARCHAR(100) UNIQUE NOT NULL,
         salt VARCHAR(50) NOT NULL,
         password_hash VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL
+        email VARCHAR(100)
     );
+
 
       CREATE TABLE IF NOT EXISTS messages (
         message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -170,15 +171,15 @@ const sendMessage = async (to, from, content) => {
   }
 };
 
-const register = async (username, password, email) => {
+const register = async (username, password) => {
   try {
     const queryText =
-      "INSERT INTO users (username, salt, password_hash, email) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING";
+      "INSERT INTO users (username, salt, password_hash) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING";
     const saltRounds = 10;
     const salt = await bcrypt.genSalt(saltRounds);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    await query(queryText, [username, salt, passwordHash, email]);
+    await query(queryText, [username, salt, passwordHash]);
   } catch (error) {
     throw error;
   }
