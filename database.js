@@ -4,31 +4,6 @@ const fs = require("fs");
 const { renderLocalDate } = require("./utils");
 require("dotenv").config();
 
-const users = [
-  {
-    id: 0,
-    username: "admin",
-    password: "password",
-    email: "admin@mail.com",
-  },
-  {
-    id: 1,
-    username: "moderator",
-    password: "password2",
-    email: "moderator@mail.com",
-  },
-];
-
-const messages = [
-  {
-    id: "0",
-    from: "admin",
-    to: "admin",
-    textContent: "Welcome to secure messaging system",
-    timestamp: Date.now(),
-  },
-];
-// Set up PostgreSQL connection pool
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -39,7 +14,6 @@ const pool = new Pool({
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
-// Function to connect to PostgreSQL and execute queries
 async function query(text, params) {
   const client = await pool.connect();
   try {
@@ -50,7 +24,6 @@ async function query(text, params) {
   }
 }
 
-// Function to create database tables
 async function createTables() {
   try {
     await query(`
@@ -89,17 +62,14 @@ const isUser = async (username, password) => {
     const result = await query(queryText, [username]);
 
     if (result.rows.length === 0) {
-      // Username not found
       return false;
     }
 
     const hashedPassword = result.rows[0].password_hash;
     const salt = result.rows[0].salt;
 
-    // Hash the provided password with the retrieved salt
     const hashedInputPassword = await bcrypt.hash(password, salt);
 
-    // Compare the hashed passwords
     return hashedPassword === hashedInputPassword;
   } catch (error) {
     console.error("Failed to authenticate user:", error.message);
@@ -117,9 +87,7 @@ const getUsersMessages = async (userName) => {
 
     const queryText =
       "SELECT messages.message_id AS id, to_user.username AS to, from_user.username AS from, messages.content_encrypted, messages.send_at AS timestamp FROM messages JOIN users to_user ON messages.to_id = to_user.id JOIN users from_user ON messages.from_id = from_user.id WHERE to_user.username = $1 ORDER BY messages.send_at DESC";
-    console.log("pre query");
     const result = await query(queryText, [userName]);
-    console.table(result.rows);
     return result.rows.map((r) => ({
       ...r,
       timestamp: renderLocalDate(new Date(r.timestamp)),
@@ -127,8 +95,6 @@ const getUsersMessages = async (userName) => {
   } catch (error) {
     return;
   }
-  // TODO: replace
-  // return messages.filter((m) => m.to === userName);
 };
 
 const getUsersMessageById = async (userName, messageId) => {
@@ -141,7 +107,6 @@ const getUsersMessageById = async (userName, messageId) => {
       [result.rows[0].content_encrypted, ENCRYPTION_KEY]
     );
     const sendDate = new Date(result.rows[0].timestamp);
-    console.log(sendDate.toLocaleTimeString("en-US", { hour12: false }));
     return {
       ...result.rows[0],
       textContent: contentResult.rows[0].content,
@@ -210,7 +175,6 @@ async function fetchTables() {
   }
 }
 
-// Function to fetch the content of a table
 async function fetchTableContent(tableName) {
   const client = await pool.connect();
   try {
