@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const { isUserExists } = require("./database");
 
 exports.validate = (method) => {
   switch (method) {
@@ -28,7 +29,14 @@ exports.validate = (method) => {
           .notEmpty()
           .withMessage("Username could not be empty")
           .isAlphanumeric()
-          .withMessage("Username should consists only of letters and numbers"),
+          .withMessage("Username should consists only of letters and numbers")
+          .custom((value) => {
+            return isUserExists(value).then((exists) => {
+              if (exists) {
+                return Promise.reject("Username already in use");
+              }
+            });
+          }),
         body("password")
           .isStrongPassword({
             minLength: 8,

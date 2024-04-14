@@ -184,11 +184,19 @@ const register = async (username, password, email) => {
   }
 };
 
-// Function to fetch all tables from the database
+const isUserExists = async (username) => {
+  try {
+    const queryText = "SELECT EXISTS (SELECT * FROM users WHERE username = $1)";
+    const result = await query(queryText, [username]);
+    return result.rows[0].exists;
+  } catch (e) {
+    console.error("Failed to check user existence:", e);
+  }
+};
+
 async function fetchTables() {
   const client = await pool.connect();
   try {
-    // Query to get all table names in the public schema
     const result = await client.query(`
       SELECT table_name
       FROM information_schema.tables
@@ -221,4 +229,5 @@ module.exports = {
   createTables,
   fetchTableContent,
   fetchTables,
+  isUserExists,
 };
