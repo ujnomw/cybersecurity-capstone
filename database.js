@@ -130,9 +130,9 @@ const sendMessage = async (to, from, content) => {
                     FROM to_user_id, from_user_id;
                   `;
     await query(queryText, [to, from, content, ENCRYPTION_KEY]);
-    return false;
-  } catch (error) {
     return true;
+  } catch (error) {
+    throw error;
   }
 };
 

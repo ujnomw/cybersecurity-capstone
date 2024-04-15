@@ -6,9 +6,20 @@ exports.validate = (method) => {
     case "sendMessage": {
       return [
         body("username", "Receiver username could not be empty")
+          .escape()
+          .trim()
           .exists()
-          .notEmpty(),
+          .notEmpty()
+          .custom((value) => {
+            return isUserExists(value).then((exists) => {
+              if (!exists) {
+                return Promise.reject("Receiver does not exists");
+              }
+            });
+          }),
         body("content", "Message's text should not be empty")
+          .escape()
+          .trim()
           .exists()
           .notEmpty(),
       ];
@@ -16,6 +27,8 @@ exports.validate = (method) => {
     case "login": {
       return [
         body("username")
+          .escape()
+          .trim()
           .notEmpty()
           .withMessage("Username could not be empty")
           .isAlphanumeric()
@@ -26,6 +39,8 @@ exports.validate = (method) => {
     case "register": {
       return [
         body("username")
+          .escape()
+          .trim()
           .notEmpty()
           .withMessage("Username could not be empty")
           .isAlphanumeric()
